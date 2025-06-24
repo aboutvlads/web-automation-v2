@@ -1,6 +1,4 @@
-# 🏨 Hotel Booking Automation V2 - Enhanced Edition
 
-Advanced Android hotel booking automation with smart AI features and human-like behavior patterns.
 
 ## 🆕 V2 Enhanced Features
 
