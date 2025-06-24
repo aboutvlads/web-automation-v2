@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotel Booking Automation V2 🏨</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 100%;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+
+        .version-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e8ed;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .version-selector {
+            margin-bottom: 25px;
+        }
+
+        .version-options {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .version-option {
+            flex: 1;
+            position: relative;
+        }
+
+        .version-option input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+        }
+
+        .version-option label {
+            display: block;
+            padding: 20px;
+            border: 2px solid #e1e8ed;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            background: white;
+        }
+
+        .version-option input[type="radio"]:checked + label {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .version-title {
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+
+        .version-desc {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .features {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+        }
+
+        .features h3 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .features ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .features li {
+            color: #666;
+            margin-bottom: 5px;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .features li:before {
+            content: "✨";
+            position: absolute;
+            left: 0;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(255, 107, 107, 0.3);
+        }
+
+        .status {
+            margin-top: 25px;
+            padding: 20px;
+            border-radius: 12px;
+            font-weight: 500;
+            text-align: center;
+            display: none;
+        }
+
+        .status.success {
+            background: linear-gradient(135deg, #00b894, #00a085);
+            color: white;
+        }
+
+        .status.error {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+        }
+
+        .status.info {
+            background: linear-gradient(135deg, #74b9ff, #0984e3);
+            color: white;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 30px 20px;
+                margin: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .version-options {
+                flex-direction: column;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏨 Hotel Automation</h1>
+            <p>Advanced Android Hotel Booking Automation</p>
+            <div class="version-badge">V2 Enhanced Edition</div>
+        </div>
+
+        <form id="automationForm">
+            <div class="form-group">
+                <label for="deviceId">📱 Android Device ID</label>
+                <input type="text" id="deviceId" name="deviceId" placeholder="e.g., 98.98.125.9:24142 or ABC123DEF456" required>
+            </div>
+
+            <div class="form-group">
+                <label for="city">🏙️ Destination City</label>
+                <input type="text" id="city" name="city" placeholder="e.g., Paris, London, Tokyo, New York" required>
+            </div>
+
+            <div class="version-selector">
+                <label>🚀 Automation Version</label>
+                <div class="version-options">
+                    <div class="version-option">
+                        <input type="radio" id="v1" name="version" value="v1">
+                        <label for="v1">
+                            <div class="version-title">V1 Standard</div>
+                            <div class="version-desc">Reliable & tested</div>
+                        </label>
+                    </div>
+                    <div class="version-option">
+                        <input type="radio" id="v2" name="version" value="v2" checked>
+                        <label for="v2">
+                            <div class="version-title">V2 Enhanced</div>
+                            <div class="version-desc">Smart & dynamic</div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="features" id="featuresV2">
+                <h3>🆕 V2 Enhanced Features</h3>
+                <ul>
+                    <li>Random timing variation (more human-like)</li>
+                    <li>Dynamic image counts (5-20 per hotel)</li>
+                    <li>Smart hotel selection (avoids duplicates)</li>
+                    <li>Intelligent scrolling patterns</li>
+                    <li>Adaptive browsing behavior</li>
+                </ul>
+            </div>
+
+            <div class="features" id="featuresV1" style="display: none;">
+                <h3>✅ V1 Standard Features</h3>
+                <ul>
+                    <li>Complete journey from Chrome to hotels</li>
+                    <li>Cookie consent handling</li>
+                    <li>Google search integration</li>
+                    <li>Consistent 15-minute browsing</li>
+                    <li>Reliable hotel navigation</li>
+                </ul>
+            </div>
+
+            <div class="button-group">
+                <button type="submit" class="btn btn-primary" id="startBtn">
+                    🚀 Start Automation
+                </button>
+                <button type="button" class="btn btn-secondary" id="statusBtn">
+                    📊 Check Status
+                </button>
+            </div>
+        </form>
+
+        <div id="status" class="status"></div>
+
+        <div class="footer">
+            <p>🤖 Powered by Midscene AI & OpenRouter</p>
+            <p>Remote automation for hotel booking research</p>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('automationForm');
+        const startBtn = document.getElementById('startBtn');
+        const statusBtn = document.getElementById('statusBtn');
+        const statusDiv = document.getElementById('status');
+        const featuresV1 = document.getElementById('featuresV1');
+        const featuresV2 = document.getElementById('featuresV2');
+        const versionInputs = document.querySelectorAll('input[name="version"]');
+
+        // Handle version selection
+        versionInputs.forEach(input => {
+            input.addEventListener('change', function() {
+                if (this.value === 'v1') {
+                    featuresV1.style.display = 'block';
+                    featuresV2.style.display = 'none';
+                } else {
+                    featuresV1.style.display = 'none';
+                    featuresV2.style.display = 'block';
+                }
+            });
+        });
+
+        function showStatus(message, type = 'info') {
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+            statusDiv.style.display = 'block';
+        }
+
+        function hideStatus() {
+            statusDiv.style.display = 'none';
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const deviceId = document.getElementById('deviceId').value.trim();
+            const city = document.getElementById('city').value.trim();
+            const version = document.querySelector('input[name="version"]:checked').value;
+            
+            if (!deviceId || !city) {
+                showStatus('❌ Please fill in all fields', 'error');
+                return;
+            }
+            
+            startBtn.disabled = true;
+            startBtn.innerHTML = '<div class="loading"></div>Starting...';
+            
+            try {
+                const endpoint = version === 'v2' ? '/api/start-automation-v2' : '/api/start-automation';
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ deviceId, city })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    let message = `🎉 ${result.message}`;
+                    if (result.estimatedTime) {
+                        message += `\n⏱️ Estimated time: ${result.estimatedTime}`;
+                    }
+                    if (result.features) {
+                        message += `\n🆕 Features: ${result.features.join(', ')}`;
+                    }
+                    showStatus(message, 'success');
+                } else {
+                    showStatus(`❌ Error: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                showStatus(`💥 Network error: ${error.message}`, 'error');
+            } finally {
+                startBtn.disabled = false;
+                startBtn.innerHTML = '🚀 Start Automation';
+            }
+        });
+
+        statusBtn.addEventListener('click', async () => {
+            statusBtn.disabled = true;
+            statusBtn.innerHTML = '<div class="loading"></div>Checking...';
+            
+            try {
+                const response = await fetch('/api/status');
+                const result = await response.json();
+                
+                let message = `📊 Active Processes: ${result.totalCount}`;
+                if (result.v1Count > 0) {
+                    message += `\n📱 V1 Standard: ${result.v1Count}`;
+                }
+                if (result.v2Count > 0) {
+                    message += `\n🆕 V2 Enhanced: ${result.v2Count}`;
+                }
+                if (result.totalCount === 0) {
+                    message += '\n✅ No active automations';
+                }
+                
+                showStatus(message, 'info');
+            } catch (error) {
+                showStatus(`💥 Status check failed: ${error.message}`, 'error');
+            } finally {
+                statusBtn.disabled = false;
+                statusBtn.innerHTML = '📊 Check Status';
+            }
+        });
+
+        // Auto-hide status after 10 seconds
+        let statusTimeout;
+        const originalShowStatus = showStatus;
+        showStatus = function(message, type) {
+            originalShowStatus(message, type);
+            clearTimeout(statusTimeout);
+            statusTimeout = setTimeout(hideStatus, 10000);
+        };
+
+        // Auto-refresh status every 30 seconds
+        setInterval(async () => {
+            try {
+                const response = await fetch('/api/status');
+                const result = await response.json();
+                
+                if (result.totalCount > 0) {
+                    document.title = `🏨 Hotel Automation V2 (${result.totalCount} active)`;
+                } else {
+                    document.title = '🏨 Hotel Automation V2';
+                }
+            } catch (error) {
+                console.log('Status refresh failed:', error);
+            }
+        }, 30000);
+    </script>
+</body>
+</html>
