@@ -2,9 +2,36 @@ const express = require('express');
 const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
+const http = require('http');
 
 const app = express();
+const server = http.createServer(app);
 const PORT = process.env.PORT || 3000;
+
+// Try to load WebSocket if available (for dashboard functionality)
+let WebSocket = null;
+let wss = null;
+let dashboardClients = new Set();
+
+try {
+    WebSocket = require('ws');
+    wss = new WebSocket.Server({ server });
+    
+    // WebSocket connection handler for dashboard
+    wss.on('connection', (ws) => {
+        console.log('📡 Dashboard client connected');
+        dashboardClients.add(ws);
+        
+        ws.on('close', () => {
+            console.log('📡 Dashboard client disconnected');
+            dashboardClients.delete(ws);
+        });
+    });
+    
+    console.log('✅ WebSocket support enabled for dashboard');
+} catch (error) {
+    console.log('⚠️ WebSocket not available - dashboard will work in basic mode');
+}
 
 // Middleware
 app.use(express.json());
@@ -12,6 +39,18 @@ app.use(express.static('.'));
 
 // Store running processes
 const runningProcesses = new Map();
+
+// Broadcast to dashboard clients if WebSocket is available
+function broadcastToDashboard(message) {
+    if (dashboardClients && dashboardClients.size > 0) {
+        const messageStr = JSON.stringify(message);
+        dashboardClients.forEach(client => {
+            if (client.readyState === WebSocket.OPEN) {
+                client.send(messageStr);
+            }
+        });
+    }
+}
 
 // API endpoint to start V2 automation
 app.post('/api/start-automation-v2', async (req, res) => {
@@ -212,17 +251,26 @@ app.get('/health', (req, res) => {
     });
 });
 
+// Serve the dashboard
+app.get('/dashboard', (req, res) => {
+    res.sendFile(path.join(__dirname, 'dashboard.html'));
+});
+
 // Serve the main page
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 // Start the server
-app.listen(PORT, '0.0.0.0', () => {
+server.listen(PORT, '0.0.0.0', () => {
     console.log(`🌐 Hotel Automation V2 Server running on port ${PORT}`);
     console.log(`📱 Access from anywhere: http://your-server-ip:${PORT}`);
+    console.log(`📊 Dashboard: http://your-server-ip:${PORT}/dashboard`);
     console.log(`🏨 Ready to automate hotel bookings with V1 & V2!`);
     console.log(`🆕 V2 Features: Random timing, Dynamic browsing, Smart selection`);
+    if (wss) {
+        console.log(`📡 Real-time dashboard with WebSocket support enabled`);
+    }
 });
 
 // Graceful shutdown
@@ -233,7 +281,9 @@ process.on('SIGTERM', () => {
         console.log(`⚠️ Killing process: ${key}`);
         process.kill();
     });
-    process.exit(0);
+    server.close(() => {
+        process.exit(0);
+    });
 });
 
 process.on('SIGINT', () => {
@@ -243,5 +293,7 @@ process.on('SIGINT', () => {
         console.log(`⚠️ Killing process: ${key}`);
         process.kill();
     });
-    process.exit(0);
+    server.close(() => {
+        process.exit(0);
+    });
 }); 
