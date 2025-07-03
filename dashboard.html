@@ -532,6 +532,8 @@
 
         function initializeDashboard() {
             console.log('🚀 Dashboard V2 initialized');
+            addLogLine('Dashboard initialized - waiting for log stream...', 'info');
+            addLogLine('💡 Click "Start Stream" to begin real-time monitoring', 'info');
             updateStatusOverview();
             loadRealDevices();
             refreshAutomationList();
@@ -874,36 +876,18 @@
         function startLogStream() {
             if (!logStreamActive) return;
             
-            // Only simulate log entries if there are active automations
-            if (automationData.activeProcesses && automationData.activeProcesses.length > 0) {
-                setTimeout(() => {
-                    if (logStreamActive) {
-                        const logTypes = [
-                            { text: '🔍 Analyzing hotel listings...', type: 'info' },
-                            { text: '📸 Processing hotel image...', type: 'info' },
-                            { text: '🎯 Smart hotel selection applied', type: 'success' },
-                            { text: '⏱️ Random timing: 2.3s delay', type: 'info' },
-                            { text: '🏨 Found 15 hotels in current view', type: 'success' },
-                            { text: '📱 Device responding normally', type: 'success' }
-                        ];
-                        
-                        const randomLog = logTypes[Math.floor(Math.random() * logTypes.length)];
-                        addLogLine(randomLog.text, randomLog.type);
-                        
-                        // Update metrics
-                        updateMetrics();
-                        
-                        startLogStream();
-                    }
-                }, 2000 + Math.random() * 3000);
-            } else {
-                // Check again in 5 seconds if automations have started
-                setTimeout(() => {
-                    if (logStreamActive) {
-                        startLogStream();
-                    }
-                }, 5000);
-            }
+            // For now, just show that stream is active - real logs will come from WebSocket
+            addLogLine('📡 Real-time log stream active - waiting for automation activity...', 'info');
+            
+            // Check periodically for new data
+            setTimeout(() => {
+                if (logStreamActive) {
+                    // Update metrics without fake data
+                    updateMetrics();
+                    // Continue checking
+                    setTimeout(startLogStream, 10000); // Check every 10 seconds
+                }
+            }, 1000);
         }
 
         function addLogLine(text, type = 'info') {
@@ -1059,12 +1043,12 @@
             document.getElementById('apiCalls').textContent = metrics.apiCalls;
         }
 
-        // Auto-start log stream
-        setTimeout(() => {
-            if (!logStreamActive) {
-                toggleLogStream();
-            }
-        }, 2000);
+        // Don't auto-start log stream - only start when user clicks
+        // setTimeout(() => {
+        //     if (!logStreamActive) {
+        //         toggleLogStream();
+        //     }
+        // }, 2000);
     </script>
 </body>
 </html>

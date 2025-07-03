@@ -52,6 +52,25 @@ function broadcastToDashboard(message) {
     }
 }
 
+// Broadcast current status to all connected dashboard clients
+function broadcastStatus() {
+    const activeProcesses = Array.from(runningProcesses.keys());
+    const v1Processes = activeProcesses.filter(key => key.startsWith('v1-'));
+    const v2Processes = activeProcesses.filter(key => key.startsWith('v2-'));
+    
+    broadcastToDashboard({
+        type: 'status',
+        data: {
+            activeProcesses,
+            v1Count: v1Processes.length,
+            v2Count: v2Processes.length,
+            totalCount: activeProcesses.length,
+            v1Processes,
+            v2Processes
+        }
+    });
+}
+
 // API endpoint to start V2 automation
 app.post('/api/start-automation-v2', async (req, res) => {
     try {
@@ -89,6 +108,11 @@ app.post('/api/start-automation-v2', async (req, res) => {
         // Store the process
         runningProcesses.set(processKey, automationProcess);
         
+        // Broadcast status update
+        if (wss) {
+            broadcastStatus();
+        }
+        
         // Handle process output
         automationProcess.stdout.on('data', (data) => {
             console.log(`📱 V2-${deviceId}: ${data.toString()}`);
@@ -101,11 +125,19 @@ app.post('/api/start-automation-v2', async (req, res) => {
         automationProcess.on('close', (code) => {
             console.log(`✅ V2 Automation completed for ${city} with code ${code}`);
             runningProcesses.delete(processKey);
+            // Broadcast status update
+            if (wss) {
+                broadcastStatus();
+            }
         });
         
         automationProcess.on('error', (error) => {
             console.error(`💥 V2 Process error: ${error.message}`);
             runningProcesses.delete(processKey);
+            // Broadcast status update
+            if (wss) {
+                broadcastStatus();
+            }
         });
         
         // Detach the process so it can run independently
@@ -249,11 +281,64 @@ app.post('/api/stop-automation', (req, res) => {
     const processKey = `${version || 'v1'}-${deviceId}-${city}`;
     
     if (runningProcesses.has(processKey)) {
-        runningProcesses.get(processKey).kill();
+        const process = runningProcesses.get(processKey);
+        process.kill('SIGTERM');
         runningProcesses.delete(processKey);
+        
+        // Broadcast update if WebSocket is available
+        if (wss) {
+            broadcastStatus();
+        }
+        
         res.json({ success: true, message: `${version || 'V1'} Automation stopped` });
     } else {
         res.status(404).json({ error: 'No running automation found' });
+    }
+});
+
+// API endpoint to pause automation
+app.post('/api/pause-automation', (req, res) => {
+    const { processKey } = req.body;
+    
+    if (runningProcesses.has(processKey)) {
+        const process = runningProcesses.get(processKey);
+        try {
+            process.kill('SIGSTOP'); // Pause the process
+            
+            // Broadcast update if WebSocket is available
+            if (wss) {
+                broadcastStatus();
+            }
+            
+            res.json({ success: true, message: `Paused automation ${processKey}` });
+        } catch (error) {
+            res.json({ success: false, error: `Failed to pause: ${error.message}` });
+        }
+    } else {
+        res.json({ success: false, error: 'Process not found' });
+    }
+});
+
+// API endpoint to resume automation
+app.post('/api/resume-automation', (req, res) => {
+    const { processKey } = req.body;
+    
+    if (runningProcesses.has(processKey)) {
+        const process = runningProcesses.get(processKey);
+        try {
+            process.kill('SIGCONT'); // Resume the process
+            
+            // Broadcast update if WebSocket is available
+            if (wss) {
+                broadcastStatus();
+            }
+            
+            res.json({ success: true, message: `Resumed automation ${processKey}` });
+        } catch (error) {
+            res.json({ success: false, error: `Failed to resume: ${error.message}` });
+        }
+    } else {
+        res.json({ success: false, error: 'Process not found' });
     }
 });
 
