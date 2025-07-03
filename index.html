@@ -444,7 +444,17 @@
                     body: JSON.stringify({ deviceId, city })
                 });
                 
-                const result = await response.json();
+                // Check if response is JSON
+                const contentType = response.headers.get('content-type');
+                let result;
+                
+                if (contentType && contentType.includes('application/json')) {
+                    result = await response.json();
+                } else {
+                    // Handle non-JSON responses (like HTML error pages)
+                    const text = await response.text();
+                    throw new Error(`Server returned non-JSON response: ${response.status} ${response.statusText}`);
+                }
                 
                 if (result.success) {
                     let message = `🎉 ${result.message}`;
@@ -472,7 +482,16 @@
             
             try {
                 const response = await fetch('/api/status');
-                const result = await response.json();
+                
+                // Check if response is JSON
+                const contentType = response.headers.get('content-type');
+                let result;
+                
+                if (contentType && contentType.includes('application/json')) {
+                    result = await response.json();
+                } else {
+                    throw new Error(`Server returned non-JSON response: ${response.status} ${response.statusText}`);
+                }
                 
                 let message = `📊 Active Processes: ${result.totalCount}`;
                 if (result.v1Count > 0) {
@@ -510,12 +529,17 @@
         setInterval(async () => {
             try {
                 const response = await fetch('/api/status');
-                const result = await response.json();
                 
-                if (result.totalCount > 0) {
-                    document.title = `🏨 Hotel Automation V2 (${result.totalCount} active)`;
-                } else {
-                    document.title = '🏨 Hotel Automation V2';
+                // Check if response is JSON
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    const result = await response.json();
+                    
+                    if (result.totalCount > 0) {
+                        document.title = `🏨 Hotel Automation V2 (${result.totalCount} active)`;
+                    } else {
+                        document.title = '🏨 Hotel Automation V2';
+                    }
                 }
             } catch (error) {
                 console.log('Status refresh failed:', error);

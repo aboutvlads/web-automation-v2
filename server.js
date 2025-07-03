@@ -458,6 +458,23 @@ app.get('/health', (req, res) => {
     });
 });
 
+// Global error handler for API routes
+app.use('/api/*', (err, req, res, next) => {
+    console.error('API Error:', err);
+    res.status(500).json({ 
+        error: 'Internal server error',
+        message: err.message 
+    });
+});
+
+// 404 handler for API routes
+app.use('/api/*', (req, res) => {
+    res.status(404).json({ 
+        error: 'API endpoint not found',
+        path: req.path 
+    });
+});
+
 // Serve the dashboard
 app.get('/dashboard', (req, res) => {
     res.sendFile(path.join(__dirname, 'dashboard.html'));
