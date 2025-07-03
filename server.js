@@ -57,6 +57,7 @@ function broadcastStatus() {
     const activeProcesses = Array.from(runningProcesses.keys());
     const v1Processes = activeProcesses.filter(key => key.startsWith('v1-'));
     const v2Processes = activeProcesses.filter(key => key.startsWith('v2-'));
+    const v3Processes = activeProcesses.filter(key => key.startsWith('v3-'));
     
     broadcastToDashboard({
         type: 'status',
@@ -64,9 +65,11 @@ function broadcastStatus() {
             activeProcesses,
             v1Count: v1Processes.length,
             v2Count: v2Processes.length,
+            v3Count: v3Processes.length,
             totalCount: activeProcesses.length,
             v1Processes,
-            v2Processes
+            v2Processes,
+            v3Processes
         }
     });
 }
@@ -236,19 +239,115 @@ app.post('/api/start-automation', async (req, res) => {
     }
 });
 
+// API endpoint to start V3 automation
+app.post('/api/start-automation-v3', async (req, res) => {
+    try {
+        const { deviceId, city } = req.body;
+        
+        if (!deviceId || !city) {
+            return res.status(400).json({ error: 'Device ID and city are required' });
+        }
+        
+        console.log(`🔥 Starting V3 automation for ${city} on device ${deviceId}`);
+        
+        // Kill any existing process for this device
+        const processKey = `v3-${deviceId}-${city}`;
+        if (runningProcesses.has(processKey)) {
+            console.log('⚠️ Killing existing V3 process...');
+            runningProcesses.get(processKey).kill();
+            runningProcesses.delete(processKey);
+        }
+        
+        // Path to the V3 automation script
+        const scriptPath = path.join(__dirname, 'booking-automation-v3.sh');
+        
+        // Check if script exists
+        if (!fs.existsSync(scriptPath)) {
+            return res.status(500).json({ error: 'V3 Automation script not found' });
+        }
+        
+        // Spawn the V3 automation process
+        const automationProcess = spawn('./booking-automation-v3.sh', [deviceId, city], {
+            cwd: __dirname,
+            detached: true,
+            stdio: ['ignore', 'pipe', 'pipe']
+        });
+        
+        // Store the process
+        runningProcesses.set(processKey, automationProcess);
+        
+        // Broadcast status update
+        if (wss) {
+            broadcastStatus();
+        }
+        
+        // Handle process output
+        automationProcess.stdout.on('data', (data) => {
+            console.log(`📱 V3-${deviceId}: ${data.toString()}`);
+        });
+        
+        automationProcess.stderr.on('data', (data) => {
+            console.error(`❌ V3-${deviceId}: ${data.toString()}`);
+        });
+        
+        automationProcess.on('close', (code) => {
+            console.log(`✅ V3 Automation completed for ${city} with code ${code}`);
+            runningProcesses.delete(processKey);
+            // Broadcast status update
+            if (wss) {
+                broadcastStatus();
+            }
+        });
+        
+        automationProcess.on('error', (error) => {
+            console.error(`💥 V3 Process error: ${error.message}`);
+            runningProcesses.delete(processKey);
+            // Broadcast status update
+            if (wss) {
+                broadcastStatus();
+            }
+        });
+        
+        // Detach the process so it can run independently
+        automationProcess.unref();
+        
+        res.json({ 
+            success: true, 
+            message: `V3 Extended automation started for ${city}`,
+            processId: automationProcess.pid,
+            estimatedTime: '30 minutes (extended deep browsing)',
+            version: 'V3',
+            features: [
+                'Extended 30-minute deep browsing',
+                'Advanced hotel exploration patterns',
+                'Multiple search refinements',
+                'Enhanced human-like behavior',
+                'Comprehensive hotel analysis'
+            ]
+        });
+        
+    } catch (error) {
+        console.error('💥 V3 Server error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // API endpoint to check status
 app.get('/api/status', (req, res) => {
     const activeProcesses = Array.from(runningProcesses.keys());
     const v1Processes = activeProcesses.filter(key => key.startsWith('v1-'));
     const v2Processes = activeProcesses.filter(key => key.startsWith('v2-'));
+    const v3Processes = activeProcesses.filter(key => key.startsWith('v3-'));
     
     res.json({
         activeProcesses,
         v1Count: v1Processes.length,
         v2Count: v2Processes.length,
+        v3Count: v3Processes.length,
         totalCount: activeProcesses.length,
         v1Processes,
-        v2Processes
+        v2Processes,
+        v3Processes
     });
 });
 

@@ -303,14 +303,21 @@
                         <input type="radio" id="v1" name="version" value="v1">
                         <label for="v1">
                             <div class="version-title">V1 Standard</div>
-                            <div class="version-desc">Reliable & tested</div>
+                            <div class="version-desc">15-20 min</div>
                         </label>
                     </div>
                     <div class="version-option">
                         <input type="radio" id="v2" name="version" value="v2" checked>
                         <label for="v2">
                             <div class="version-title">V2 Enhanced</div>
-                            <div class="version-desc">Smart & dynamic</div>
+                            <div class="version-desc">12-25 min</div>
+                        </label>
+                    </div>
+                    <div class="version-option">
+                        <input type="radio" id="v3" name="version" value="v3">
+                        <label for="v3">
+                            <div class="version-title">V3 Extended</div>
+                            <div class="version-desc">30 min deep</div>
                         </label>
                     </div>
                 </div>
@@ -335,6 +342,17 @@
                     <li>Google search integration</li>
                     <li>Consistent 15-minute browsing</li>
                     <li>Reliable hotel navigation</li>
+                </ul>
+            </div>
+
+            <div class="features" id="featuresV3" style="display: none;">
+                <h3>🔥 V3 Extended Features</h3>
+                <ul>
+                    <li>Extended 30-minute deep browsing</li>
+                    <li>Advanced hotel exploration patterns</li>
+                    <li>Multiple search refinements</li>
+                    <li>Enhanced human-like behavior</li>
+                    <li>Comprehensive hotel analysis</li>
                 </ul>
             </div>
 
@@ -363,17 +381,24 @@
         const statusDiv = document.getElementById('status');
         const featuresV1 = document.getElementById('featuresV1');
         const featuresV2 = document.getElementById('featuresV2');
+        const featuresV3 = document.getElementById('featuresV3');
         const versionInputs = document.querySelectorAll('input[name="version"]');
 
         // Handle version selection
         versionInputs.forEach(input => {
             input.addEventListener('change', function() {
+                // Hide all features first
+                featuresV1.style.display = 'none';
+                featuresV2.style.display = 'none';
+                featuresV3.style.display = 'none';
+                
+                // Show selected version features
                 if (this.value === 'v1') {
                     featuresV1.style.display = 'block';
-                    featuresV2.style.display = 'none';
-                } else {
-                    featuresV1.style.display = 'none';
+                } else if (this.value === 'v2') {
                     featuresV2.style.display = 'block';
+                } else if (this.value === 'v3') {
+                    featuresV3.style.display = 'block';
                 }
             });
         });
@@ -404,7 +429,13 @@
             startBtn.innerHTML = '<div class="loading"></div>Starting...';
             
             try {
-                const endpoint = version === 'v2' ? '/api/start-automation-v2' : '/api/start-automation';
+                let endpoint = '/api/start-automation'; // Default to V1
+                if (version === 'v2') {
+                    endpoint = '/api/start-automation-v2';
+                } else if (version === 'v3') {
+                    endpoint = '/api/start-automation-v3';
+                }
+                
                 const response = await fetch(endpoint, {
                     method: 'POST',
                     headers: {
@@ -449,6 +480,9 @@
                 }
                 if (result.v2Count > 0) {
                     message += `\n🆕 V2 Enhanced: ${result.v2Count}`;
+                }
+                if (result.v3Count > 0) {
+                    message += `\n🔥 V3 Extended: ${result.v3Count}`;
                 }
                 if (result.totalCount === 0) {
                     message += '\n✅ No active automations';
