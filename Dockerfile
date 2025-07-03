@@ -16,7 +16,7 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install Node.js dependencies
+# Install Node.js dependencies (including WebSocket)
 RUN npm ci --only=production
 
 # Copy application files
@@ -24,6 +24,7 @@ COPY . .
 
 # Make scripts executable
 RUN chmod +x booking-automation-v2.sh
+RUN chmod +x start-dashboard.sh
 
 # Create directories for Midscene
 RUN mkdir -p midscene_run/log midscene_run/report
@@ -35,5 +36,5 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:3000/health || exit 1
 
-# Start the application
-CMD ["npm", "start"]
+# Start the enhanced application with dashboard
+CMD ["node", "server-enhanced.js"]

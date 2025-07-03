@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏨 Hotel Automation Dashboard V2</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: auto auto 1fr;
+            gap: 20px;
+            height: calc(100vh - 150px);
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .card h3 {
+            margin-bottom: 20px;
+            color: #2a5298;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-overview {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .automation-controls {
+            grid-column: 1;
+        }
+
+        .live-logs {
+            grid-column: 2;
+        }
+
+        .device-monitor {
+            grid-column: 1;
+        }
+
+        .performance-metrics {
+            grid-column: 2;
+        }
+
+        .log-container {
+            background: #1a1a1a;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            padding: 15px;
+            border-radius: 8px;
+            height: 300px;
+            overflow-y: auto;
+            font-size: 12px;
+            line-height: 1.4;
+            border: 2px solid #333;
+        }
+
+        .log-line {
+            margin-bottom: 5px;
+            word-wrap: break-word;
+        }
+
+        .log-line.error {
+            color: #ff6b6b;
+        }
+
+        .log-line.success {
+            color: #51cf66;
+        }
+
+        .log-line.warning {
+            color: #ffd43b;
+        }
+
+        .log-line.info {
+            color: #74c0fc;
+        }
+
+        .control-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #ffd93d, #ff9500);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #6bcf7f, #4ecdc4);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .automation-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .automation-item {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .automation-info {
+            flex: 1;
+        }
+
+        .automation-status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .status-running {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-paused {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-stopped {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .device-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .device-card {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+        }
+
+        .device-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .status-online {
+            background: #28a745;
+            box-shadow: 0 0 10px rgba(40, 167, 69, 0.5);
+        }
+
+        .status-offline {
+            background: #dc3545;
+        }
+
+        .metric-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .metric-item {
+            text-align: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #2a5298;
+        }
+
+        .metric-label {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .refresh-indicator {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #2a5298;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .status-overview {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            }
+
+            .control-buttons {
+                flex-direction: column;
+            }
+
+            .automation-controls,
+            .live-logs,
+            .device-monitor,
+            .performance-metrics {
+                grid-column: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="header">
+            <h1>🏨 Hotel Automation Dashboard V2</h1>
+            <p>Real-time monitoring and control for enhanced automation</p>
+        </div>
+
+        <div class="dashboard-grid">
+            <!-- Status Overview -->
+            <div class="card status-overview">
+                <div class="stat-card">
+                    <div class="stat-number" id="activeCount">0</div>
+                    <div class="stat-label">Active Automations</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="v2Count">0</div>
+                    <div class="stat-label">V2 Enhanced</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="completedToday">0</div>
+                    <div class="stat-label">Completed Today</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="successRate">95%</div>
+                    <div class="stat-label">Success Rate</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="avgDuration">18m</div>
+                    <div class="stat-label">Avg Duration</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="apiCalls">0</div>
+                    <div class="stat-label">API Calls</div>
+                </div>
+            </div>
+
+            <!-- Automation Controls -->
+            <div class="card automation-controls">
+                <h3>🎮 Automation Controls</h3>
+                
+                <div class="control-buttons">
+                    <button class="btn btn-primary" onclick="startQuickAutomation()">
+                        🚀 Quick Start
+                    </button>
+                    <button class="btn btn-warning" onclick="pauseAllAutomations()">
+                        ⏸️ Pause All
+                    </button>
+                    <button class="btn btn-success" onclick="resumeAllAutomations()">
+                        ▶️ Resume All
+                    </button>
+                    <button class="btn btn-danger" onclick="stopAllAutomations()">
+                        ⏹️ Stop All
+                    </button>
+                </div>
+
+                <div class="alert alert-info">
+                    <strong>💡 Pro Tip:</strong> Use pause/resume for debugging or when you need to check device status manually.
+                </div>
+
+                <div class="automation-list" id="automationList">
+                    <!-- Dynamic automation items will be inserted here -->
+                </div>
+            </div>
+
+            <!-- Live Logs -->
+            <div class="card live-logs">
+                <h3>📜 Live Logs <span class="refresh-indicator" id="logRefreshIndicator"></span></h3>
+                
+                <div class="control-buttons">
+                    <button class="btn btn-primary" onclick="toggleLogStream()">
+                        <span id="logToggleText">📡 Start Stream</span>
+                    </button>
+                    <button class="btn btn-warning" onclick="clearLogs()">
+                        🗑️ Clear
+                    </button>
+                    <button class="btn btn-success" onclick="downloadLogs()">
+                        💾 Download
+                    </button>
+                </div>
+
+                <div class="log-container" id="logContainer">
+                    <div class="log-line info">📡 Dashboard initialized - waiting for log stream...</div>
+                    <div class="log-line info">💡 Click "Start Stream" to begin real-time monitoring</div>
+                </div>
+            </div>
+
+            <!-- Device Monitor -->
+            <div class="card device-monitor">
+                <h3>📱 Device Monitor</h3>
+                
+                <div class="device-grid" id="deviceGrid">
+                    <!-- Dynamic device cards will be inserted here -->
+                </div>
+
+                <div class="control-buttons">
+                    <button class="btn btn-primary" onclick="refreshDevices()">
+                        🔄 Refresh Devices
+                    </button>
+                    <button class="btn btn-success" onclick="connectNewDevice()">
+                        ➕ Add Device
+                    </button>
+                </div>
+            </div>
+
+            <!-- Performance Metrics -->
+            <div class="card performance-metrics">
+                <h3>📊 Performance Metrics</h3>
+                
+                <div class="metric-grid">
+                    <div class="metric-item">
+                        <div class="metric-value" id="hotelsViewed">0</div>
+                        <div class="metric-label">Hotels Viewed</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="imagesProcessed">0</div>
+                        <div class="metric-label">Images Processed</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="avgResponseTime">0ms</div>
+                        <div class="metric-label">Avg Response Time</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="errorRate">0%</div>
+                        <div class="metric-label">Error Rate</div>
+                    </div>
+                </div>
+
+                <div class="progress-bar">
+                    <div class="progress-fill" id="overallProgress" style="width: 0%"></div>
+                </div>
+                <div style="text-align: center; margin-top: 10px; font-size: 0.9rem; color: #666;">
+                    Overall Progress: <span id="progressText">0%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Dashboard state
+        let logStreamActive = false;
+        let automationData = {};
+        let deviceData = {};
+        let metrics = {
+            hotelsViewed: 0,
+            imagesProcessed: 0,
+            apiCalls: 0,
+            completedToday: 0
+        };
+        let websocket = null;
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeDashboard();
+            connectWebSocket();
+            startDataRefresh();
+        });
+
+        function initializeDashboard() {
+            console.log('🚀 Dashboard V2 initialized');
+            updateStatusOverview();
+            loadSampleDevices();
+            refreshAutomationList();
+        }
+
+        // WebSocket connection
+        function connectWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}`;
+            
+            websocket = new WebSocket(wsUrl);
+            
+            websocket.onopen = function() {
+                console.log('📡 WebSocket connected');
+                addLogLine('📡 Real-time connection established', 'success');
+            };
+            
+            websocket.onmessage = function(event) {
+                const message = JSON.parse(event.data);
+                handleWebSocketMessage(message);
+            };
+            
+            websocket.onclose = function() {
+                console.log('📡 WebSocket disconnected');
+                addLogLine('📡 Real-time connection lost - attempting reconnect...', 'warning');
+                
+                // Attempt to reconnect after 3 seconds
+                setTimeout(connectWebSocket, 3000);
+            };
+            
+            websocket.onerror = function(error) {
+                console.error('❌ WebSocket error:', error);
+                addLogLine('❌ WebSocket connection error', 'error');
+            };
+        }
+
+        // Handle WebSocket messages
+        function handleWebSocketMessage(message) {
+            switch (message.type) {
+                case 'status':
+                    automationData = message.data;
+                    updateStatusOverview();
+                    refreshAutomationList();
+                    break;
+                    
+                case 'log':
+                    if (logStreamActive) {
+                        const logData = message.data;
+                        let logType = 'info';
+                        if (logData.data.includes('❌') || logData.data.includes('Error')) {
+                            logType = 'error';
+                        } else if (logData.data.includes('✅') || logData.data.includes('Success')) {
+                            logType = 'success';
+                        } else if (logData.data.includes('⚠️') || logData.data.includes('Warning')) {
+                            logType = 'warning';
+                        }
+                        addLogLine(logData.data, logType);
+                    }
+                    break;
+                    
+                case 'processComplete':
+                    addLogLine(`✅ Process completed: ${message.processKey} (exit code: ${message.exitCode})`, 'success');
+                    break;
+                    
+                case 'processError':
+                    addLogLine(`❌ Process error: ${message.processKey} - ${message.error}`, 'error');
+                    break;
+                    
+                case 'processPaused':
+                    addLogLine(`⏸️ Process paused: ${message.processKey}`, 'warning');
+                    break;
+                    
+                case 'processResumed':
+                    addLogLine(`▶️ Process resumed: ${message.processKey}`, 'success');
+                    break;
+                    
+                case 'processStopped':
+                    addLogLine(`⏹️ Process stopped: ${message.processKey}`, 'warning');
+                    break;
+            }
+        }
+
+        // Data refresh cycle
+        function startDataRefresh() {
+            setInterval(async () => {
+                await refreshDashboardData();
+            }, 5000); // Refresh every 5 seconds
+        }
+
+        async function refreshDashboardData() {
+            try {
+                // Fetch automation status
+                const response = await fetch('/api/status');
+                const data = await response.json();
+                
+                // Update automation data
+                automationData = data;
+                updateStatusOverview();
+                refreshAutomationList();
+                
+                // Update metrics
+                updateMetrics();
+                
+            } catch (error) {
+                console.error('Failed to refresh dashboard data:', error);
+                addLogLine('❌ Failed to refresh dashboard data', 'error');
+            }
+        }
+
+        function updateStatusOverview() {
+            document.getElementById('activeCount').textContent = automationData.totalCount || 0;
+            document.getElementById('v2Count').textContent = automationData.v2Count || 0;
+            
+            // Simulate metrics updates
+            metrics.completedToday += Math.random() > 0.8 ? 1 : 0;
+            document.getElementById('completedToday').textContent = metrics.completedToday;
+        }
+
+        function refreshAutomationList() {
+            const listContainer = document.getElementById('automationList');
+            listContainer.innerHTML = '';
+
+            if (!automationData.activeProcesses || automationData.activeProcesses.length === 0) {
+                listContainer.innerHTML = '<div class="alert alert-info">No active automations</div>';
+                return;
+            }
+
+            automationData.activeProcesses.forEach(processKey => {
+                const [version, deviceId, city] = processKey.split('-');
+                const item = createAutomationItem(version, deviceId, city, 'running');
+                listContainer.appendChild(item);
+            });
+        }
+
+        function createAutomationItem(version, deviceId, city, status) {
+            const item = document.createElement('div');
+            item.className = 'automation-item';
+            item.innerHTML = `
+                <div class="automation-info">
+                    <strong>${version.toUpperCase()} - ${city}</strong><br>
+                    <small>Device: ${deviceId}</small>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${Math.random() * 100}%"></div>
+                    </div>
+                </div>
+                <div>
+                    <span class="automation-status status-${status}">${status}</span>
+                    <div style="margin-top: 10px;">
+                        <button class="btn btn-warning" onclick="pauseAutomation('${deviceId}', '${city}', '${version}')" style="padding: 5px 10px; font-size: 12px;">
+                            ⏸️ Pause
+                        </button>
+                        <button class="btn btn-success" onclick="resumeAutomation('${deviceId}', '${city}', '${version}')" style="padding: 5px 10px; font-size: 12px;">
+                            ▶️ Resume
+                        </button>
+                        <button class="btn btn-danger" onclick="stopAutomation('${deviceId}', '${city}', '${version}')" style="padding: 5px 10px; font-size: 12px;">
+                            ⏹️ Stop
+                        </button>
+                    </div>
+                </div>
+            `;
+            return item;
+        }
+
+        // Control functions
+        async function startQuickAutomation() {
+            const deviceId = prompt('Enter device ID:', '98.98.125.9:24142');
+            const city = prompt('Enter city:', 'Paris');
+            
+            if (!deviceId || !city) return;
+
+            try {
+                const response = await fetch('/api/start-automation-v2', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ deviceId, city })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    addLogLine(`🎉 Started V2 automation for ${city} on ${deviceId}`, 'success');
+                    setTimeout(refreshDashboardData, 1000);
+                } else {
+                    addLogLine(`❌ Failed to start automation: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                addLogLine(`💥 Error starting automation: ${error.message}`, 'error');
+            }
+        }
+
+        async function pauseAutomation(deviceId, city, version) {
+            const processKey = `${version.toLowerCase()}-${deviceId}-${city}`;
+            
+            if (websocket && websocket.readyState === WebSocket.OPEN) {
+                websocket.send(JSON.stringify({
+                    type: 'pauseProcess',
+                    processKey: processKey
+                }));
+            } else {
+                // Fallback to API call
+                try {
+                    const response = await fetch('/api/pause-automation', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ processKey })
+                    });
+                    
+                    const result = await response.json();
+                    if (result.success) {
+                        addLogLine(`⏸️ Pausing ${version} automation for ${city} on ${deviceId}`, 'warning');
+                    } else {
+                        addLogLine(`❌ Failed to pause: ${result.error}`, 'error');
+                    }
+                } catch (error) {
+                    addLogLine(`💥 Error pausing automation: ${error.message}`, 'error');
+                }
+            }
+            
+            addLogLine(`💡 Note: Process will complete current task before pausing`, 'info');
+        }
+
+        async function stopAutomation(deviceId, city, version) {
+            const processKey = `${version.toLowerCase()}-${deviceId}-${city}`;
+            
+            if (websocket && websocket.readyState === WebSocket.OPEN) {
+                websocket.send(JSON.stringify({
+                    type: 'stopProcess',
+                    processKey: processKey
+                }));
+            } else {
+                // Fallback to API call
+                try {
+                    const response = await fetch('/api/stop-automation', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ deviceId, city, version })
+                    });
+
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        addLogLine(`⏹️ Stopped ${version} automation for ${city}`, 'success');
+                        setTimeout(refreshDashboardData, 1000);
+                    } else {
+                        addLogLine(`❌ Failed to stop automation: ${result.error}`, 'error');
+                    }
+                } catch (error) {
+                    addLogLine(`💥 Error stopping automation: ${error.message}`, 'error');
+                }
+            }
+        }
+
+        async function pauseAllAutomations() {
+            addLogLine('⏸️ Pausing all active automations...', 'warning');
+            addLogLine('💡 Note: Automations will complete current tasks before pausing', 'info');
+        }
+
+        async function resumeAutomation(deviceId, city, version) {
+            const processKey = `${version.toLowerCase()}-${deviceId}-${city}`;
+            
+            if (websocket && websocket.readyState === WebSocket.OPEN) {
+                websocket.send(JSON.stringify({
+                    type: 'resumeProcess',
+                    processKey: processKey
+                }));
+            } else {
+                // Fallback to API call
+                try {
+                    const response = await fetch('/api/resume-automation', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ processKey })
+                    });
+                    
+                    const result = await response.json();
+                    if (result.success) {
+                        addLogLine(`▶️ Resuming ${version} automation for ${city} on ${deviceId}`, 'success');
+                    } else {
+                        addLogLine(`❌ Failed to resume: ${result.error}`, 'error');
+                    }
+                } catch (error) {
+                    addLogLine(`💥 Error resuming automation: ${error.message}`, 'error');
+                }
+            }
+        }
+
+        async function resumeAllAutomations() {
+            addLogLine('▶️ Resuming all paused automations...', 'success');
+            
+            if (automationData.activeProcesses) {
+                for (const processKey of automationData.activeProcesses) {
+                    if (websocket && websocket.readyState === WebSocket.OPEN) {
+                        websocket.send(JSON.stringify({
+                            type: 'resumeProcess',
+                            processKey: processKey
+                        }));
+                    }
+                }
+            }
+        }
+
+        async function stopAllAutomations() {
+            if (!confirm('Are you sure you want to stop ALL active automations?')) return;
+            
+            addLogLine('⏹️ Stopping all active automations...', 'warning');
+            
+            if (automationData.activeProcesses) {
+                for (const processKey of automationData.activeProcesses) {
+                    const [version, deviceId, city] = processKey.split('-');
+                    await stopAutomation(deviceId, city, version);
+                }
+            }
+        }
+
+        // Log functions
+        function toggleLogStream() {
+            logStreamActive = !logStreamActive;
+            const toggleText = document.getElementById('logToggleText');
+            const indicator = document.getElementById('logRefreshIndicator');
+            
+            if (logStreamActive) {
+                toggleText.textContent = '⏸️ Stop Stream';
+                indicator.style.display = 'inline-block';
+                startLogStream();
+                addLogLine('📡 Log stream started - monitoring real-time activity', 'success');
+            } else {
+                toggleText.textContent = '📡 Start Stream';
+                indicator.style.display = 'none';
+                addLogLine('⏸️ Log stream paused', 'warning');
+            }
+        }
+
+        function startLogStream() {
+            if (!logStreamActive) return;
+            
+            // Simulate log entries (in real implementation, this would connect to WebSocket or SSE)
+            setTimeout(() => {
+                if (logStreamActive) {
+                    const logTypes = [
+                        { text: '🔍 Analyzing hotel listings...', type: 'info' },
+                        { text: '📸 Processing hotel image...', type: 'info' },
+                        { text: '🎯 Smart hotel selection applied', type: 'success' },
+                        { text: '⏱️ Random timing: 2.3s delay', type: 'info' },
+                        { text: '🏨 Found 15 hotels in current view', type: 'success' },
+                        { text: '📱 Device responding normally', type: 'success' }
+                    ];
+                    
+                    const randomLog = logTypes[Math.floor(Math.random() * logTypes.length)];
+                    addLogLine(randomLog.text, randomLog.type);
+                    
+                    // Update metrics
+                    updateMetrics();
+                    
+                    startLogStream();
+                }
+            }, 2000 + Math.random() * 3000);
+        }
+
+        function addLogLine(text, type = 'info') {
+            const logContainer = document.getElementById('logContainer');
+            const logLine = document.createElement('div');
+            logLine.className = `log-line ${type}`;
+            
+            const timestamp = new Date().toLocaleTimeString();
+            logLine.textContent = `[${timestamp}] ${text}`;
+            
+            logContainer.appendChild(logLine);
+            logContainer.scrollTop = logContainer.scrollHeight;
+            
+            // Keep only last 100 log lines
+            const lines = logContainer.querySelectorAll('.log-line');
+            if (lines.length > 100) {
+                lines[0].remove();
+            }
+        }
+
+        function clearLogs() {
+            document.getElementById('logContainer').innerHTML = '';
+            addLogLine('🗑️ Logs cleared', 'info');
+        }
+
+        function downloadLogs() {
+            const logContainer = document.getElementById('logContainer');
+            const logs = Array.from(logContainer.querySelectorAll('.log-line'))
+                .map(line => line.textContent)
+                .join('\n');
+            
+            const blob = new Blob([logs], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `hotel-automation-logs-${new Date().toISOString().split('T')[0]}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            addLogLine('💾 Logs downloaded successfully', 'success');
+        }
+
+        // Device functions
+        function loadSampleDevices() {
+            deviceData = {
+                '98.98.125.9:24142': { status: 'online', city: 'Paris', version: 'V2' },
+                '192.168.1.100:5555': { status: 'offline', city: null, version: null }
+            };
+            updateDeviceGrid();
+        }
+
+        function updateDeviceGrid() {
+            const deviceGrid = document.getElementById('deviceGrid');
+            deviceGrid.innerHTML = '';
+
+            Object.entries(deviceData).forEach(([deviceId, data]) => {
+                const deviceCard = document.createElement('div');
+                deviceCard.className = 'device-card';
+                deviceCard.innerHTML = `
+                    <div class="device-status">
+                        <div class="status-indicator status-${data.status}"></div>
+                        <strong>${deviceId}</strong>
+                    </div>
+                    <div style="font-size: 0.9rem; color: #666;">
+                        Status: ${data.status}<br>
+                        ${data.city ? `Running: ${data.version} - ${data.city}` : 'Idle'}
+                    </div>
+                `;
+                deviceGrid.appendChild(deviceCard);
+            });
+        }
+
+        function refreshDevices() {
+            addLogLine('🔄 Refreshing device list...', 'info');
+            // In real implementation, this would call ADB devices
+            setTimeout(() => {
+                updateDeviceGrid();
+                addLogLine('✅ Device list refreshed', 'success');
+            }, 1000);
+        }
+
+        function connectNewDevice() {
+            const deviceId = prompt('Enter device ID to connect:', '192.168.1.101:5555');
+            if (!deviceId) return;
+            
+            deviceData[deviceId] = { status: 'online', city: null, version: null };
+            updateDeviceGrid();
+            addLogLine(`📱 Connected new device: ${deviceId}`, 'success');
+        }
+
+        // Metrics functions
+        function updateMetrics() {
+            metrics.hotelsViewed += Math.random() > 0.7 ? 1 : 0;
+            metrics.imagesProcessed += Math.random() > 0.5 ? Math.floor(Math.random() * 3) + 1 : 0;
+            metrics.apiCalls += Math.random() > 0.6 ? 1 : 0;
+            
+            document.getElementById('hotelsViewed').textContent = metrics.hotelsViewed;
+            document.getElementById('imagesProcessed').textContent = metrics.imagesProcessed;
+            document.getElementById('apiCalls').textContent = metrics.apiCalls;
+            
+            // Update response time
+            const responseTime = 800 + Math.random() * 400;
+            document.getElementById('avgResponseTime').textContent = Math.round(responseTime) + 'ms';
+            
+            // Update progress
+            const progress = Math.min(100, (metrics.hotelsViewed * 20) % 100);
+            document.getElementById('overallProgress').style.width = progress + '%';
+            document.getElementById('progressText').textContent = Math.round(progress) + '%';
+        }
+
+        // Auto-start log stream
+        setTimeout(() => {
+            if (!logStreamActive) {
+                toggleLogStream();
+            }
+        }, 2000);
+    </script>
+</body>
+</html>

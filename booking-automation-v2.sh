@@ -368,8 +368,67 @@ echo "🔑 Using OpenRouter API with Qwen VL model (V2 Enhanced)"
 echo "🔧 Android SDK: $ANDROID_SDK_ROOT"
 echo "🔐 API Key: ${OPENAI_API_KEY:0:10}...${OPENAI_API_KEY: -6} (from environment)"
 
-# Run the Midscene CLI
-npx --yes @midscene/cli "$YAML_FILE"
+# Final device connection check before running automation
+echo ""
+echo "🔍 Final device check before automation..."
+if ! adb devices | grep -q "$DEVICE_ID.*device"; then
+    echo "❌ Device lost connection: $DEVICE_ID"
+    echo "🔄 Attempting to reconnect..."
+    if [[ "$DEVICE_ID" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+:[0-9]+$ ]]; then
+        adb connect "$DEVICE_ID"
+        sleep 2
+        if ! adb devices | grep -q "$DEVICE_ID.*device"; then
+            echo "❌ Failed to reconnect to device"
+            exit 1
+        fi
+    else
+        echo "❌ Device not available"
+        exit 1
+    fi
+fi
+echo "✅ Device ready for automation: $DEVICE_ID"
+
+# Run the Midscene CLI with enhanced error handling
+echo "🔧 Running Midscene CLI..."
+echo "📝 YAML file: $YAML_FILE"
+echo "🔍 File exists: $([ -f "$YAML_FILE" ] && echo "✅ Yes" || echo "❌ No")"
+echo "📏 File size: $(wc -l < "$YAML_FILE" 2>/dev/null || echo "0") lines"
+echo ""
+
+# Check if YAML file was created successfully
+if [ ! -f "$YAML_FILE" ]; then
+    echo "❌ Error: YAML file was not created: $YAML_FILE"
+    exit 1
+fi
+
+# Verify YAML file has content
+if [ ! -s "$YAML_FILE" ]; then
+    echo "❌ Error: YAML file is empty: $YAML_FILE"
+    exit 1
+fi
+
+# Show first few lines of YAML for debugging
+echo "📄 YAML file preview (first 10 lines):"
+head -10 "$YAML_FILE"
+echo "..."
+echo ""
+
+# Run Midscene CLI with timeout and error handling
+echo "🚀 Executing Midscene CLI..."
+timeout 1800 npx --yes @midscene/cli "$YAML_FILE" 2>&1
+CLI_EXIT_CODE=$?
+
+# Check the exit code
+if [ $CLI_EXIT_CODE -eq 124 ]; then
+    echo "⏰ Midscene CLI timed out after 30 minutes"
+    echo "💡 This might be normal for long automation sessions"
+elif [ $CLI_EXIT_CODE -ne 0 ]; then
+    echo "❌ Midscene CLI failed with exit code: $CLI_EXIT_CODE"
+    echo "💡 Check the logs above for error details"
+    exit $CLI_EXIT_CODE
+else
+    echo "✅ Midscene CLI completed successfully"
+fi
 
 echo ""
 echo "🎉 V2 Automation completed!"

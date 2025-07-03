@@ -4,8 +4,9 @@
   "description": "Enhanced Hotel Booking Automation V2 with smart features",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js",
+    "start": "node server-enhanced.js",
+    "dev": "nodemon server-enhanced.js",
+    "dashboard": "node server-enhanced.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
@@ -23,7 +24,8 @@
   "author": "Hotel Automation Team",
   "license": "MIT",
   "dependencies": {
-    "express": "^4.18.2"
+    "express": "^4.18.2",
+    "ws": "^8.14.2"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
