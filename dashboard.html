@@ -533,7 +533,7 @@
         function initializeDashboard() {
             console.log('🚀 Dashboard V2 initialized');
             updateStatusOverview();
-            loadSampleDevices();
+            loadRealDevices();
             refreshAutomationList();
         }
 
@@ -575,6 +575,7 @@
                     automationData = message.data;
                     updateStatusOverview();
                     refreshAutomationList();
+                    loadRealDevices(); // Update device status when automation status changes
                     break;
                     
                 case 'log':
@@ -655,7 +656,13 @@
             listContainer.innerHTML = '';
 
             if (!automationData.activeProcesses || automationData.activeProcesses.length === 0) {
-                listContainer.innerHTML = '<div class="alert alert-info">No active automations</div>';
+                listContainer.innerHTML = `
+                    <div style="text-align: center; color: #6b7280; padding: 40px 20px;">
+                        <div style="font-size: 48px; margin-bottom: 15px;">🎮</div>
+                        <div style="font-size: 1.1em; margin-bottom: 8px;">No active automations</div>
+                        <div style="font-size: 0.9em; opacity: 0.8;">Use "Quick Start" to begin automation</div>
+                    </div>
+                `;
                 return;
             }
 
@@ -867,27 +874,36 @@
         function startLogStream() {
             if (!logStreamActive) return;
             
-            // Simulate log entries (in real implementation, this would connect to WebSocket or SSE)
-            setTimeout(() => {
-                if (logStreamActive) {
-                    const logTypes = [
-                        { text: '🔍 Analyzing hotel listings...', type: 'info' },
-                        { text: '📸 Processing hotel image...', type: 'info' },
-                        { text: '🎯 Smart hotel selection applied', type: 'success' },
-                        { text: '⏱️ Random timing: 2.3s delay', type: 'info' },
-                        { text: '🏨 Found 15 hotels in current view', type: 'success' },
-                        { text: '📱 Device responding normally', type: 'success' }
-                    ];
-                    
-                    const randomLog = logTypes[Math.floor(Math.random() * logTypes.length)];
-                    addLogLine(randomLog.text, randomLog.type);
-                    
-                    // Update metrics
-                    updateMetrics();
-                    
-                    startLogStream();
-                }
-            }, 2000 + Math.random() * 3000);
+            // Only simulate log entries if there are active automations
+            if (automationData.activeProcesses && automationData.activeProcesses.length > 0) {
+                setTimeout(() => {
+                    if (logStreamActive) {
+                        const logTypes = [
+                            { text: '🔍 Analyzing hotel listings...', type: 'info' },
+                            { text: '📸 Processing hotel image...', type: 'info' },
+                            { text: '🎯 Smart hotel selection applied', type: 'success' },
+                            { text: '⏱️ Random timing: 2.3s delay', type: 'info' },
+                            { text: '🏨 Found 15 hotels in current view', type: 'success' },
+                            { text: '📱 Device responding normally', type: 'success' }
+                        ];
+                        
+                        const randomLog = logTypes[Math.floor(Math.random() * logTypes.length)];
+                        addLogLine(randomLog.text, randomLog.type);
+                        
+                        // Update metrics
+                        updateMetrics();
+                        
+                        startLogStream();
+                    }
+                }, 2000 + Math.random() * 3000);
+            } else {
+                // Check again in 5 seconds if automations have started
+                setTimeout(() => {
+                    if (logStreamActive) {
+                        startLogStream();
+                    }
+                }, 5000);
+            }
         }
 
         function addLogLine(text, type = 'info') {
@@ -931,17 +947,56 @@
         }
 
         // Device functions
-        function loadSampleDevices() {
-            deviceData = {
-                '98.98.125.9:24142': { status: 'online', city: 'Paris', version: 'V2' },
-                '192.168.1.100:5555': { status: 'offline', city: null, version: null }
-            };
-            updateDeviceGrid();
+        async function loadRealDevices() {
+            try {
+                const response = await fetch('/api/devices');
+                const data = await response.json();
+                
+                // Convert API response to device data format
+                deviceData = {};
+                data.devices.forEach(device => {
+                    deviceData[device.id] = {
+                        status: device.status,
+                        city: null,
+                        version: null,
+                        type: device.type
+                    };
+                });
+                
+                // Check which devices are actually running automations
+                if (automationData.activeProcesses) {
+                    automationData.activeProcesses.forEach(processKey => {
+                        const [version, deviceId, city] = processKey.split('-');
+                        if (deviceData[deviceId]) {
+                            deviceData[deviceId].city = city;
+                            deviceData[deviceId].version = version.toUpperCase();
+                        }
+                    });
+                }
+                
+                updateDeviceGrid();
+            } catch (error) {
+                console.error('Failed to load devices:', error);
+                // Fallback to empty device list
+                deviceData = {};
+                updateDeviceGrid();
+            }
         }
 
         function updateDeviceGrid() {
             const deviceGrid = document.getElementById('deviceGrid');
             deviceGrid.innerHTML = '';
+
+            if (Object.keys(deviceData).length === 0) {
+                deviceGrid.innerHTML = `
+                    <div style="text-align: center; color: #6b7280; padding: 40px 20px;">
+                        <div style="font-size: 48px; margin-bottom: 15px;">📱</div>
+                        <div style="font-size: 1.1em; margin-bottom: 8px;">No devices with active automations</div>
+                        <div style="font-size: 0.9em; opacity: 0.8;">Devices will appear here when automations are running</div>
+                    </div>
+                `;
+                return;
+            }
 
             Object.entries(deviceData).forEach(([deviceId, data]) => {
                 const deviceCard = document.createElement('div');
@@ -962,11 +1017,9 @@
 
         function refreshDevices() {
             addLogLine('🔄 Refreshing device list...', 'info');
-            // In real implementation, this would call ADB devices
-            setTimeout(() => {
-                updateDeviceGrid();
+            loadRealDevices().then(() => {
                 addLogLine('✅ Device list refreshed', 'success');
-            }, 1000);
+            });
         }
 
         function connectNewDevice() {
@@ -980,22 +1033,30 @@
 
         // Metrics functions
         function updateMetrics() {
-            metrics.hotelsViewed += Math.random() > 0.7 ? 1 : 0;
-            metrics.imagesProcessed += Math.random() > 0.5 ? Math.floor(Math.random() * 3) + 1 : 0;
-            metrics.apiCalls += Math.random() > 0.6 ? 1 : 0;
+            // Only update metrics if there are active automations
+            if (automationData.activeProcesses && automationData.activeProcesses.length > 0) {
+                metrics.hotelsViewed += Math.random() > 0.7 ? 1 : 0;
+                metrics.imagesProcessed += Math.random() > 0.5 ? Math.floor(Math.random() * 3) + 1 : 0;
+                metrics.apiCalls += Math.random() > 0.6 ? 1 : 0;
+                
+                // Update response time
+                const responseTime = 800 + Math.random() * 400;
+                document.getElementById('avgResponseTime').textContent = Math.round(responseTime) + 'ms';
+                
+                // Update progress
+                const progress = Math.min(100, (metrics.hotelsViewed * 20) % 100);
+                document.getElementById('overallProgress').style.width = progress + '%';
+                document.getElementById('progressText').textContent = Math.round(progress) + '%';
+            } else {
+                // Reset metrics when no automations are running
+                document.getElementById('avgResponseTime').textContent = '0ms';
+                document.getElementById('overallProgress').style.width = '0%';
+                document.getElementById('progressText').textContent = '0%';
+            }
             
             document.getElementById('hotelsViewed').textContent = metrics.hotelsViewed;
             document.getElementById('imagesProcessed').textContent = metrics.imagesProcessed;
             document.getElementById('apiCalls').textContent = metrics.apiCalls;
-            
-            // Update response time
-            const responseTime = 800 + Math.random() * 400;
-            document.getElementById('avgResponseTime').textContent = Math.round(responseTime) + 'ms';
-            
-            // Update progress
-            const progress = Math.min(100, (metrics.hotelsViewed * 20) % 100);
-            document.getElementById('overallProgress').style.width = progress + '%';
-            document.getElementById('progressText').textContent = Math.round(progress) + '%';
         }
 
         // Auto-start log stream

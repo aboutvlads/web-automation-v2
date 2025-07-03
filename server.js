@@ -220,6 +220,29 @@ app.get('/api/status', (req, res) => {
     });
 });
 
+// API endpoint to get device list
+app.get('/api/devices', (req, res) => {
+    const devices = [];
+    
+    // Add devices that are currently running automations
+    runningProcesses.forEach((process, processKey) => {
+        const [version, deviceId, city] = processKey.split('-');
+        if (deviceId && !devices.find(d => d.id === deviceId)) {
+            devices.push({
+                id: deviceId,
+                status: 'online',
+                type: deviceId.includes(':') ? 'wireless' : 'usb',
+                currentAutomation: {
+                    version: version.toUpperCase(),
+                    city: city
+                }
+            });
+        }
+    });
+    
+    res.json({ devices });
+});
+
 // API endpoint to stop automation
 app.post('/api/stop-automation', (req, res) => {
     const { deviceId, city, version } = req.body;
